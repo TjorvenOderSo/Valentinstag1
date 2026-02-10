@@ -2,7 +2,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const GRAVITY = 0.4;
-const JUMP = -12;
+const JUMP = -11;
 
 let mouseX = canvas.width / 2;
 
