@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Valentinstag Story</title>
+<style>
+body{
+  margin:0;
+  background:linear-gradient(#ffb6d5,#ffcce6);
+  text-align:center;
+}
+img{
+  width:80%;
+  margin-top:40px;
+  border-radius:10px;
+}
+button{
+  margin-top:20px;
+  padding:15px 30px;
+  font-size:18px;
+  background:#ff4fa0;
+  border:none;
+  color:white;
+  border-radius:8px;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<img id="storyImage" src="images/page1.jpg">
+<br>
+<button onclick="nextImage()">weiter →</button>
+
+<script>
+let current = 1;
+const total = 9; // 9 Bilder
+
+function nextImage(){
+  current++;
+  if(current > total){
+    // nach der ersten Story geht es zu SkyJump
+    location.href = "skyjump.html";
+    return;
+  }
+  document.getElementById("storyImage").src =
+    "images/page" + current + ".jpg";
+}
+</script>
+
+</body>
+</html>
