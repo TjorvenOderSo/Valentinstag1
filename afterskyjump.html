@@ -2,33 +2,11 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>story</title>
-<style>
-body{
-  margin:0;
-  background:linear-gradient(#ffb6d5,#ffcce6);
-  text-align:center;
-}
-img{
-  width:80%;
-  margin-top:40px;
-  border-radius:10px;
-}
-button{
-  margin-top:20px;
-  padding:15px 30px;
-  font-size:18px;
-  background:#ff4fa0;
-  border:none;
-  color:white;
-  border-radius:8px;
-  cursor:pointer;
-}
-</style>
+<title>Story 2</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<img id="storyImage" src="images/after1.jpg">
+<img id="storyImage" src="images/after1.jpg" style="width:80%; margin-top:40px; border-radius:10px;">
 <br>
 <button onclick="nextImage()">weiter →</button>
 
@@ -42,10 +20,8 @@ function nextImage(){
     location.href = "crossroad.html";
     return;
   }
-  document.getElementById("storyImage").src =
-    "images/after" + current + ".jpg";
+  document.getElementById("storyImage").src = "images/after" + current + ".jpg";
 }
 </script>
-
 </body>
 </html>
