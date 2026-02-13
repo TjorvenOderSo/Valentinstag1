@@ -9,12 +9,29 @@ canvas{ display:block; }
 #hud{
   position:absolute; top:10px; left:10px; color:white; font-family:sans-serif; font-size:22px;
 }
+#gameOver{
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  color:white; font-family:sans-serif;
+  display:flex; justify-content:center; align-items:center;
+  flex-direction:column; font-size:30px;
+  display:none;
+}
+#gameOver button{
+  margin-top:20px; padding:10px 20px; font-size:24px; cursor:pointer;
+  background:#ff4fa0; border:none; color:white; border-radius:8px;
+}
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 <div id="hud">Herzen: 0 / 40</div>
+
+<div id="gameOver">
+  <div>PAHAHA DU OPFER🫵😂</div>
+  <button onclick="restartGame()">Neu starten</button>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -34,8 +51,6 @@ let ball = {x:canvas.width/2, y:canvas.height-50, radius:25, dy:0, onPlatform:fa
 
 // Plattformen
 let platforms = [];
-
-// Bodenplattform – ganz unten, über gesamte Breite
 let groundPlatform = {x:0, y:canvas.height-20, width:canvas.width, height:20, isGround:true};
 platforms.push(groundPlatform);
 
@@ -49,6 +64,8 @@ for(let i=1;i<10;i++){
     isGround:false
   });
 }
+
+const gameOverDiv = document.getElementById("gameOver");
 
 function drawBall(){
   ctx.fillStyle="#ff4fa0";
@@ -65,15 +82,12 @@ function drawPlatforms(){
 }
 
 function update(){
-  // Cooldown für sanften Sprung
   if(ball.jumpCooldown > 0) ball.jumpCooldown--;
 
-  // Gravitation
   ball.dy += gravity;
   ball.y += ball.dy;
   ball.onPlatform = false;
 
-  // Plattform-Kollision
   platforms.forEach((p,i)=>{
     if(ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.width &&
        ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + p.height &&
@@ -82,9 +96,7 @@ function update(){
       ball.y = p.y - ball.radius;
       ball.onPlatform = true;
 
-      // Nur springen, wenn Cooldown vorbei
       if(ball.jumpCooldown === 0){
-        // Bodenplattform: springt nicht weg
         if(!p.isGround){
           ball.dy = -jumpStrength;
           ball.jumpCooldown = 8;
@@ -92,15 +104,14 @@ function update(){
         }
       }
 
-      // Bodenplattform verschwindet nach erstem richtigen Sprung
       if(!p.isGround){
-        // Entferne die Bodenplattform
+        // Entferne Bodenplattform nach erstem Sprung
         platforms = platforms.filter(pl => !pl.isGround);
       }
     }
   });
 
-  // Scroll: Ball in Mitte
+  // Scroll
   if(ball.y < canvas.height/2){
     let diff = canvas.height/2 - ball.y;
     ball.y = canvas.height/2;
@@ -120,22 +131,28 @@ function update(){
     setTimeout(()=>{ location.href="after1.html"; },500);
   }
 
-  // Ball fällt zu weit → Reset
+  // Ball fällt zu weit → Game Over
   if(ball.y > canvas.height){
-    ball.x = canvas.width/2;
-    ball.y = canvas.height-50;
-    ball.dy = 0;
-    hearts = 0;
-    // Bodenplattform wieder hinzufügen
-    if(!platforms.find(p=>p.isGround)){
-      platforms.push(groundPlatform);
-    }
+    showGameOver();
   }
 
   document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts}`;
 }
 
-// Maussteuerung
+function showGameOver(){
+  gameOverDiv.style.display = "flex";
+}
+
+function restartGame(){
+  // Reset
+  ball.x = canvas.width/2;
+  ball.y = canvas.height-50;
+  ball.dy = 0;
+  hearts = 0;
+  platforms = platforms.filter(p=>p.isGround); // nur Bodenplattform behalten
+  gameOverDiv.style.display = "none";
+}
+
 document.addEventListener("mousemove",(e)=>{
   ball.x = e.clientX;
 });
