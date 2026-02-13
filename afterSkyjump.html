@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Die Suche geht weiter</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="story">
+  <img id="storyImage" src="images/after1.jpg">
+  <button onclick="nextImage()">Weiter →</button>
+</div>
+
+<script>
+let current = 1;
+const total = 4;
+
+function nextImage(){
+  current++;
+  if(current > total){
+    location.href = "crossroad.html";
+    return;
+  }
+  document.getElementById("storyImage").src =
+    "images/after" + current + ".jpg";
+}
+</script>
+
+</body>
+</html>
