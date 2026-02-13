@@ -43,8 +43,8 @@ let hearts = 0;
 const targetHearts = 40;
 
 // Physik
-let gravity = 0.25;
-let jumpStrength = 12;
+let gravity = 0.2;
+let jumpStrength = 10;
 
 // Ball
 let ball = {x:canvas.width/2, y:canvas.height-50, radius:25, dy:0, onPlatform:false, jumpCooldown:0};
@@ -129,9 +129,12 @@ function update(){
     });
   }
 
-  // Herz-Ziel erreicht
+  // Herz-Ziel erreicht → zweite Story
   if(hearts >= targetHearts){
-    setTimeout(()=>{ location.href="after1.html"; },500);
+    setTimeout(()=>{ 
+      // Hier den Pfad zur zweiten Story-Seite anpassen:
+      location.href = "images/after1.html"; 
+    },500);
   }
 
   // Ball fällt zu weit → Game Over
