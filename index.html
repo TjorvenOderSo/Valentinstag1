@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Valentinstags Geschenk</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="bookCover" onclick="openBook()">
+  <div class="book">
+    <h1>Valentinstags Geschenk</h1>
+    <p>Klicke um das Buch zu öffnen</p>
+  </div>
+</div>
+
+<div id="bookContent" class="hidden">
+  <img id="pageImage" src="images/page1.jpg">
+  <button onclick="nextPage()">Weiter →</button>
+</div>
+
+<script>
+let currentPage = 1;
+const totalPages = 10; // HIER Anzahl deiner Bilder ändern
+
+function openBook(){
+  document.getElementById("bookCover").style.display = "none";
+  document.getElementById("bookContent").classList.remove("hidden");
+}
+
+function nextPage(){
+  currentPage++;
+  if(currentPage > totalPages){
+    alert("Ende 💗");
+    return;
+  }
+  document.getElementById("pageImage").src = "images/page" + currentPage + ".jpg";
+}
+</script>
+
+</body>
+</html>
