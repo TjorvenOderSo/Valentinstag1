@@ -26,15 +26,18 @@ let hearts = 0;
 const targetHearts = 40;
 
 // Physik
-let gravity = 0.25;       // deutlich sanftere Gravitation
-let jumpStrength = 12;     // höherer Sprung
+let gravity = 0.25;
+let jumpStrength = 12;
 
 // Ball
 let ball = {x:canvas.width/2, y:canvas.height-50, radius:25, dy:0, onPlatform:false, jumpCooldown:0};
 
 // Plattformen
 let platforms = [];
-platforms.push({x:canvas.width/2-75, y:canvas.height-20, width:150, height:15, start:true});
+
+// Bodenplattform – ganz unten, über gesamte Breite
+let groundPlatform = {x:0, y:canvas.height-20, width:canvas.width, height:20, isGround:true};
+platforms.push(groundPlatform);
 
 // Zufällige Plattformen
 for(let i=1;i<10;i++){
@@ -43,7 +46,7 @@ for(let i=1;i<10;i++){
     y: canvas.height - i*120,
     width: 120,
     height:15,
-    start:false
+    isGround:false
   });
 }
 
@@ -76,19 +79,23 @@ function update(){
        ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + p.height &&
        ball.dy > 0){
 
-      ball.y = p.y - ball.radius;   // Ball auf Plattform setzen
+      ball.y = p.y - ball.radius;
       ball.onPlatform = true;
 
       // Nur springen, wenn Cooldown vorbei
       if(ball.jumpCooldown === 0){
-        ball.dy = -jumpStrength;
-        ball.jumpCooldown = 8;  // sanftes Timing für kontinuierlichen Sprung
-        hearts++;
+        // Bodenplattform: springt nicht weg
+        if(!p.isGround){
+          ball.dy = -jumpStrength;
+          ball.jumpCooldown = 8;
+          hearts++;
+        }
       }
 
-      // Startplattform entfernen
-      if(p.start){
-        platforms.splice(i,1);
+      // Bodenplattform verschwindet nach erstem richtigen Sprung
+      if(!p.isGround){
+        // Entferne die Bodenplattform
+        platforms = platforms.filter(pl => !pl.isGround);
       }
     }
   });
@@ -101,7 +108,9 @@ function update(){
       p.y += diff;
       if(p.y > canvas.height){
         p.y = 0;
-        p.x = Math.random()*(canvas.width-120);
+        if(!p.isGround){
+          p.x = Math.random()*(canvas.width-120);
+        }
       }
     });
   }
@@ -111,10 +120,16 @@ function update(){
     setTimeout(()=>{ location.href="after1.html"; },500);
   }
 
-  // Ball fällt zu weit
+  // Ball fällt zu weit → Reset
   if(ball.y > canvas.height){
+    ball.x = canvas.width/2;
     ball.y = canvas.height-50;
     ball.dy = 0;
+    hearts = 0;
+    // Bodenplattform wieder hinzufügen
+    if(!platforms.find(p=>p.isGround)){
+      platforms.push(groundPlatform);
+    }
   }
 
   document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts}`;
