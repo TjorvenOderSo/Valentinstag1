@@ -4,13 +4,17 @@
 <meta charset="UTF-8">
 <title>SkyJump</title>
 <style>
-body{ margin:0; overflow:hidden; background:linear-gradient(#111,#333);}
+body{ margin:0; overflow:hidden; background:linear-gradient(#ffe0f0,#ff80b0);}
 canvas{ display:block; }
+#hud{
+  position:absolute; top:10px; left:10px; color:white; font-family:sans-serif; font-size:22px;
+}
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
+<div id="hud">Herzen: 0 / 40</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -18,26 +22,32 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Angepasste Physik
-let gravity = 0.6;        // realistischere Gravitation
-let jumpStrength = 12;    // Sprungkraft für kontrolliertes Hüpfen
 let hearts = 0;
-let targetHearts = 40;
+const targetHearts = 40;
 
-let ball = {x: canvas.width/2, y: canvas.height-50, radius:20, dy:0, onPlatform:false};
+// Physik
+let gravity = 0.5;        // etwas stärkere Gravitation für sanften Fall
+let jumpStrength = 10;     // Sprungkraft anpassbar
+
+// Ball
+let ball = {x:canvas.width/2, y:canvas.height-50, radius:25, dy:0, onPlatform:false};
 
 // Plattformen
 let platforms = [];
+// Startplattform
+platforms.push({x:canvas.width/2-75, y:canvas.height-20, width:150, height:15, start:true});
 
-// Startplattform unten
-platforms.push({x: canvas.width/2 - 50, y: canvas.height - 30, width:100, height:15, start:true});
-
-// Weitere Plattformen
-for(let i=1;i<8;i++){
-  platforms.push({x:Math.random()*(canvas.width-100), y:canvas.height - i*120, width:100, height:15, start:false});
+// Zufällige Plattformen
+for(let i=1;i<10;i++){
+  platforms.push({
+    x: Math.random()*(canvas.width-120),
+    y: canvas.height - i*120,
+    width: 120,
+    height:15,
+    start:false
+  });
 }
 
-// Zeichnen
 function drawBall(){
   ctx.fillStyle="#ff4fa0";
   ctx.beginPath();
@@ -46,35 +56,37 @@ function drawBall(){
 }
 
 function drawPlatforms(){
-  ctx.fillStyle="#888";
-  platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.width,p.height));
+  ctx.fillStyle="#aa88aa";
+  platforms.forEach(p=>{
+    ctx.fillRect(p.x,p.y,p.width,p.height);
+  });
 }
 
-// Update Loop
 function update(){
+  // Gravitation
   ball.dy += gravity;
   ball.y += ball.dy;
   ball.onPlatform = false;
 
-  platforms.forEach((p,index)=>{
-    // Ball landet auf Plattform
-    if(ball.x > p.x && ball.x < p.x + p.width &&
-       ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + 15 &&
+  // Plattform-Kollision
+  platforms.forEach((p,i)=>{
+    if(ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.width &&
+       ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + p.height &&
        ball.dy > 0){
 
-      ball.y = p.y - ball.radius; // Ball genau auf Plattform setzen
-      ball.dy = -jumpStrength;    // Sprung
+      ball.y = p.y - ball.radius;   // Ball auf Plattform setzen
+      ball.dy = -jumpStrength;      // Sprung
       hearts++;
       ball.onPlatform = true;
 
       // Startplattform entfernen
       if(p.start){
-        platforms.splice(index,1);
+        platforms.splice(i,1);
       }
     }
   });
 
-  // Scrollen: Ball immer in der Mitte halten
+  // Scroll: Ball immer in Mitte
   if(ball.y < canvas.height/2){
     let diff = canvas.height/2 - ball.y;
     ball.y = canvas.height/2;
@@ -82,41 +94,39 @@ function update(){
       p.y += diff;
       if(p.y > canvas.height){
         p.y = 0;
-        p.x = Math.random()*(canvas.width-100);
+        p.x = Math.random()*(canvas.width-120);
       }
     });
   }
 
   // Herz-Ziel erreicht
   if(hearts >= targetHearts){
-    setTimeout(()=>{location.href="afterskyjump.html"},500);
+    setTimeout(()=>{ location.href="after1.html"; },500);
   }
 
   // Ball fällt zu weit
   if(ball.y > canvas.height){
-    ball.y = canvas.height - 50;
+    ball.y = canvas.height-50;
     ball.dy = 0;
   }
-}
 
-// Main Draw Loop
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawBall();
-  drawPlatforms();
-  ctx.fillStyle="white";
-  ctx.font="22px Arial";
-  ctx.fillText("Herzen: "+hearts+" / "+targetHearts,20,40);
-  update();
-  requestAnimationFrame(draw);
+  document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts}`;
 }
-
-draw();
 
 // Maussteuerung
 document.addEventListener("mousemove",(e)=>{
   ball.x = e.clientX;
 });
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawPlatforms();
+  drawBall();
+  update();
+  requestAnimationFrame(draw);
+}
+
+draw();
 </script>
 
 </body>
