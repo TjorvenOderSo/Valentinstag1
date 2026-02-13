@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Sky Jump</title>
+<title>skyjump</title>
 <style>
 body{
   margin:0;
@@ -38,7 +38,6 @@ let ball = {
 
 let platforms = [];
 
-// Plattformen erzeugen
 for(let i=0;i<8;i++){
   platforms.push({
     x: Math.random()*(canvas.width-100),
@@ -88,14 +87,12 @@ function update(){
     });
   }
 
-  // Ziel erreicht 💖
   if(hearts >= targetHearts){
     setTimeout(()=>{
-      location.href="afterSkyjump.html";
+      location.href="afterskyjump.html";
     },1000);
   }
 
-  // Falls runterfällt → zurücksetzen statt Game Over
   if(ball.y > canvas.height){
     ball.y = canvas.height-80;
     ball.dy = 0;
@@ -110,7 +107,7 @@ function draw(){
 
   ctx.fillStyle="white";
   ctx.font="22px Arial";
-  ctx.fillText("Herzen: "+hearts+" / "+targetHearts,20,40);
+  ctx.fillText("herzen: "+hearts+" / "+targetHearts,20,40);
 
   update();
   requestAnimationFrame(draw);
