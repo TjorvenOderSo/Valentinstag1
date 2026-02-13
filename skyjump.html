@@ -42,6 +42,7 @@ canvas.height = window.innerHeight;
 let hearts = 0;
 const targetHearts = 40;
 
+// Physik
 let gravity = 0.25;
 let jumpStrength = 12;
 
@@ -64,7 +65,7 @@ for(let i=1;i<10;i++){
   });
 }
 
-// Startsprung direkt beim Start
+// Startsprung
 ball.dy = -jumpStrength;
 
 const gameOverDiv = document.getElementById("gameOver");
@@ -99,7 +100,6 @@ function update(){
       ball.onPlatform = true;
 
       if(ball.jumpCooldown === 0){
-        // Springen nur auf echten Plattformen
         if(!p.isGround){
           ball.dy = -jumpStrength;
           ball.jumpCooldown = 8;
@@ -142,6 +142,15 @@ function update(){
   document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts}`;
 }
 
+// Rechtsklick für Notfall-Sprung
+document.addEventListener("contextmenu", (e)=>{
+  e.preventDefault(); // verhindert Kontextmenü
+  if(ball.jumpCooldown === 0){
+    ball.dy = -jumpStrength;
+    ball.jumpCooldown = 8;
+  }
+});
+
 function showGameOver(){
   gameOverDiv.style.display = "flex";
 }
@@ -149,7 +158,7 @@ function showGameOver(){
 function restartGame(){
   ball.x = canvas.width/2;
   ball.y = canvas.height-50;
-  ball.dy = -jumpStrength; // Startsprung wieder aktiv
+  ball.dy = -jumpStrength; // Startsprung
   hearts = 0;
   platforms = platforms.filter(p=>p.isGround);
   gameOverDiv.style.display = "none";
