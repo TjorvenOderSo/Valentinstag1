@@ -160,7 +160,23 @@ function restartGame(){
   ball.y = canvas.height-50;
   ball.dy = -jumpStrength; // Startsprung
   hearts = 0;
-  platforms = platforms.filter(p=>p.isGround);
+  platforms = []; // alte Plattformen löschen
+
+  // Bodenplattform wieder hinzufügen
+  groundPlatform = {x:0, y:canvas.height-20, width:canvas.width, height:20, isGround:true};
+  platforms.push(groundPlatform);
+
+  // Zufällige Plattformen neu erzeugen
+  for(let i=1;i<10;i++){
+    platforms.push({
+      x: Math.random()*(canvas.width-120),
+      y: canvas.height - i*120,
+      width: 120,
+      height:15,
+      isGround:false
+    });
+  }
+
   gameOverDiv.style.display = "none";
 }
 
