@@ -2,16 +2,10 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>skyjump</title>
+<title>SkyJump</title>
 <style>
-body{
-  margin:0;
-  overflow:hidden;
-  background:linear-gradient(#111,#333);
-}
-canvas{
-  display:block;
-}
+body{ margin:0; overflow:hidden; background:linear-gradient(#111,#333);}
+canvas{ display:block; }
 </style>
 </head>
 <body>
@@ -21,7 +15,6 @@ canvas{
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -29,36 +22,24 @@ let gravity = 0.5;
 let hearts = 0;
 let targetHearts = 40;
 
-let ball = {
-  x: canvas.width/2,
-  y: canvas.height-80,
-  radius: 20,
-  dy: 0
-};
-
+let ball = {x: canvas.width/2, y: canvas.height-80, radius:20, dy:0};
 let platforms = [];
 
+// Plattformen erzeugen
 for(let i=0;i<8;i++){
-  platforms.push({
-    x: Math.random()*(canvas.width-100),
-    y: canvas.height - i*100,
-    width: 100,
-    height: 15
-  });
+  platforms.push({x:Math.random()*(canvas.width-100), y:canvas.height - i*100, width:100, height:15});
 }
 
 function drawBall(){
   ctx.fillStyle="#ff4fa0";
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+  ctx.arc(ball.x, ball.y, ball.radius,0,Math.PI*2);
   ctx.fill();
 }
 
 function drawPlatforms(){
   ctx.fillStyle="#888";
-  platforms.forEach(p=>{
-    ctx.fillRect(p.x,p.y,p.width,p.height);
-  });
+  platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.width,p.height));
 }
 
 function update(){
@@ -66,58 +47,46 @@ function update(){
   ball.y += ball.dy;
 
   platforms.forEach(p=>{
-    if(ball.x > p.x &&
-       ball.x < p.x+p.width &&
-       ball.y+ball.radius > p.y &&
-       ball.y+ball.radius < p.y+15 &&
-       ball.dy > 0){
-         ball.dy = -12;
-         hearts++;
-       }
+    if(ball.x>p.x && ball.x<p.x+p.width && ball.y+ball.radius>p.y && ball.y+ball.radius<p.y+15 && ball.dy>0){
+      ball.dy=-12;
+      hearts++;
+    }
   });
 
-  if(ball.y < canvas.height/2){
-    ball.y = canvas.height/2;
+  if(ball.y<canvas.height/2){
+    ball.y=canvas.height/2;
     platforms.forEach(p=>{
-      p.y += 5;
-      if(p.y > canvas.height){
-        p.y = 0;
-        p.x = Math.random()*(canvas.width-100);
+      p.y +=5;
+      if(p.y>canvas.height){
+        p.y=0;
+        p.x=Math.random()*(canvas.width-100);
       }
     });
   }
 
   if(hearts >= targetHearts){
-    setTimeout(()=>{
-      location.href="afterskyjump.html";
-    },1000);
+    setTimeout(()=>{location.href="afterskyjump.html"},1000);
   }
 
-  if(ball.y > canvas.height){
-    ball.y = canvas.height-80;
-    ball.dy = 0;
+  if(ball.y>canvas.height){
+    ball.y=canvas.height-80;
+    ball.dy=0;
   }
 }
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-
   drawBall();
   drawPlatforms();
-
   ctx.fillStyle="white";
   ctx.font="22px Arial";
-  ctx.fillText("herzen: "+hearts+" / "+targetHearts,20,40);
-
+  ctx.fillText("Herzen: "+hearts+" / "+targetHearts,20,40);
   update();
   requestAnimationFrame(draw);
 }
 
 draw();
-
-document.addEventListener("mousemove",(e)=>{
-  ball.x = e.clientX;
-});
+document.addEventListener("mousemove",(e)=>{ball.x=e.clientX});
 </script>
 
 </body>
