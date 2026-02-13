@@ -18,27 +18,26 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Gravitation & Sprungkraft anpassen
-let gravity = 0.4;       // etwas sanfter als vorher
-let jumpStrength = 10;   // kontrollierter Sprung
-
+// Angepasste Physik
+let gravity = 0.6;        // realistischere Gravitation
+let jumpStrength = 12;    // Sprungkraft für kontrolliertes Hüpfen
 let hearts = 0;
 let targetHearts = 40;
 
-// Ball
-let ball = {x: canvas.width/2, y: canvas.height-50, radius:20, dy:0};
+let ball = {x: canvas.width/2, y: canvas.height-50, radius:20, dy:0, onPlatform:false};
 
 // Plattformen
 let platforms = [];
 
-// Startplattform ganz unten
+// Startplattform unten
 platforms.push({x: canvas.width/2 - 50, y: canvas.height - 30, width:100, height:15, start:true});
 
 // Weitere Plattformen
 for(let i=1;i<8;i++){
-  platforms.push({x:Math.random()*(canvas.width-100), y:canvas.height - i*100, width:100, height:15, start:false});
+  platforms.push({x:Math.random()*(canvas.width-100), y:canvas.height - i*120, width:100, height:15, start:false});
 }
 
+// Zeichnen
 function drawBall(){
   ctx.fillStyle="#ff4fa0";
   ctx.beginPath();
@@ -51,27 +50,31 @@ function drawPlatforms(){
   platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.width,p.height));
 }
 
+// Update Loop
 function update(){
   ball.dy += gravity;
   ball.y += ball.dy;
+  ball.onPlatform = false;
 
-  platforms.forEach((p, index)=>{
-    // Plattform-Kollision nur, wenn Ball von oben kommt
-    if(ball.x > p.x && ball.x < p.x + p.width && 
-       ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + 15 && 
+  platforms.forEach((p,index)=>{
+    // Ball landet auf Plattform
+    if(ball.x > p.x && ball.x < p.x + p.width &&
+       ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + 15 &&
        ball.dy > 0){
 
-      ball.dy = -jumpStrength;
+      ball.y = p.y - ball.radius; // Ball genau auf Plattform setzen
+      ball.dy = -jumpStrength;    // Sprung
       hearts++;
+      ball.onPlatform = true;
 
-      // Startplattform entfernen, sobald man die erste „normale“ Plattform berührt
+      // Startplattform entfernen
       if(p.start){
         platforms.splice(index,1);
       }
     }
   });
 
-  // Scroll-Effekt: Ball immer in der Mitte halten
+  // Scrollen: Ball immer in der Mitte halten
   if(ball.y < canvas.height/2){
     let diff = canvas.height/2 - ball.y;
     ball.y = canvas.height/2;
@@ -89,13 +92,14 @@ function update(){
     setTimeout(()=>{location.href="afterskyjump.html"},500);
   }
 
-  // Ball fällt nach unten
+  // Ball fällt zu weit
   if(ball.y > canvas.height){
     ball.y = canvas.height - 50;
     ball.dy = 0;
   }
 }
 
+// Main Draw Loop
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBall();
@@ -109,8 +113,10 @@ function draw(){
 
 draw();
 
-// Ball mit Maus bewegen
-document.addEventListener("mousemove",(e)=>{ball.x=e.clientX});
+// Maussteuerung
+document.addEventListener("mousemove",(e)=>{
+  ball.x = e.clientX;
+});
 </script>
 
 </body>
