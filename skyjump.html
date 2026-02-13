@@ -18,16 +18,25 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let gravity = 0.5;
+// Gravitation & Sprungkraft anpassen
+let gravity = 0.4;       // etwas sanfter als vorher
+let jumpStrength = 10;   // kontrollierter Sprung
+
 let hearts = 0;
 let targetHearts = 40;
 
-let ball = {x: canvas.width/2, y: canvas.height-80, radius:20, dy:0};
+// Ball
+let ball = {x: canvas.width/2, y: canvas.height-50, radius:20, dy:0};
+
+// Plattformen
 let platforms = [];
 
-// Plattformen erzeugen
-for(let i=0;i<8;i++){
-  platforms.push({x:Math.random()*(canvas.width-100), y:canvas.height - i*100, width:100, height:15});
+// Startplattform ganz unten
+platforms.push({x: canvas.width/2 - 50, y: canvas.height - 30, width:100, height:15, start:true});
+
+// Weitere Plattformen
+for(let i=1;i<8;i++){
+  platforms.push({x:Math.random()*(canvas.width-100), y:canvas.height - i*100, width:100, height:15, start:false});
 }
 
 function drawBall(){
@@ -46,31 +55,44 @@ function update(){
   ball.dy += gravity;
   ball.y += ball.dy;
 
-  platforms.forEach(p=>{
-    if(ball.x>p.x && ball.x<p.x+p.width && ball.y+ball.radius>p.y && ball.y+ball.radius<p.y+15 && ball.dy>0){
-      ball.dy=-12;
+  platforms.forEach((p, index)=>{
+    // Plattform-Kollision nur, wenn Ball von oben kommt
+    if(ball.x > p.x && ball.x < p.x + p.width && 
+       ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + 15 && 
+       ball.dy > 0){
+
+      ball.dy = -jumpStrength;
       hearts++;
+
+      // Startplattform entfernen, sobald man die erste „normale“ Plattform berührt
+      if(p.start){
+        platforms.splice(index,1);
+      }
     }
   });
 
-  if(ball.y<canvas.height/2){
-    ball.y=canvas.height/2;
+  // Scroll-Effekt: Ball immer in der Mitte halten
+  if(ball.y < canvas.height/2){
+    let diff = canvas.height/2 - ball.y;
+    ball.y = canvas.height/2;
     platforms.forEach(p=>{
-      p.y +=5;
-      if(p.y>canvas.height){
-        p.y=0;
-        p.x=Math.random()*(canvas.width-100);
+      p.y += diff;
+      if(p.y > canvas.height){
+        p.y = 0;
+        p.x = Math.random()*(canvas.width-100);
       }
     });
   }
 
+  // Herz-Ziel erreicht
   if(hearts >= targetHearts){
-    setTimeout(()=>{location.href="afterskyjump.html"},1000);
+    setTimeout(()=>{location.href="afterskyjump.html"},500);
   }
 
-  if(ball.y>canvas.height){
-    ball.y=canvas.height-80;
-    ball.dy=0;
+  // Ball fällt nach unten
+  if(ball.y > canvas.height){
+    ball.y = canvas.height - 50;
+    ball.dy = 0;
   }
 }
 
@@ -86,6 +108,8 @@ function draw(){
 }
 
 draw();
+
+// Ball mit Maus bewegen
 document.addEventListener("mousemove",(e)=>{ball.x=e.clientX});
 </script>
 
