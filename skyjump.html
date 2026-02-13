@@ -42,7 +42,6 @@ canvas.height = window.innerHeight;
 let hearts = 0;
 const targetHearts = 40;
 
-// Physik
 let gravity = 0.25;
 let jumpStrength = 12;
 
@@ -64,6 +63,9 @@ for(let i=1;i<10;i++){
     isGround:false
   });
 }
+
+// Startsprung direkt beim Start
+ball.dy = -jumpStrength;
 
 const gameOverDiv = document.getElementById("gameOver");
 
@@ -97,6 +99,7 @@ function update(){
       ball.onPlatform = true;
 
       if(ball.jumpCooldown === 0){
+        // Springen nur auf echten Plattformen
         if(!p.isGround){
           ball.dy = -jumpStrength;
           ball.jumpCooldown = 8;
@@ -104,8 +107,8 @@ function update(){
         }
       }
 
+      // Bodenplattform verschwindet nach erstem Sprung auf echter Plattform
       if(!p.isGround){
-        // Entferne Bodenplattform nach erstem Sprung
         platforms = platforms.filter(pl => !pl.isGround);
       }
     }
@@ -144,12 +147,11 @@ function showGameOver(){
 }
 
 function restartGame(){
-  // Reset
   ball.x = canvas.width/2;
   ball.y = canvas.height-50;
-  ball.dy = 0;
+  ball.dy = -jumpStrength; // Startsprung wieder aktiv
   hearts = 0;
-  platforms = platforms.filter(p=>p.isGround); // nur Bodenplattform behalten
+  platforms = platforms.filter(p=>p.isGround);
   gameOverDiv.style.display = "none";
 }
 
