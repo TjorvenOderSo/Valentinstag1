@@ -2,185 +2,197 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Sky Jump</title>
-<link rel="stylesheet" href="style.css">
+<title>SkyJump</title>
 <style>
-canvas {
-    background: #ffe6f0;
-    display: block;
-    margin: 0 auto;
-    border: 2px solid #ff4d6d;
+body{ margin:0; overflow:hidden; background:linear-gradient(#ffe0f0,#ff80b0);}
+canvas{ display:block; }
+#hud{
+  position:absolute; top:10px; left:10px; color:white; font-family:sans-serif; font-size:22px;
+}
+#gameOver{
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  color:white; font-family:sans-serif;
+  display:flex; justify-content:center; align-items:center;
+  flex-direction:column; font-size:30px;
+  display:none;
+}
+#gameOver button{
+  margin-top:20px; padding:10px 20px; font-size:24px; cursor:pointer;
+  background:#ff4fa0; border:none; color:white; border-radius:8px;
 }
 </style>
 </head>
 <body>
 
-<h1>Sky Jump</h1>
-<canvas id="gameCanvas" width="480" height="640"></canvas>
+<canvas id="game"></canvas>
+<div id="hud">Herzen: 0 / 40</div>
+
+<div id="gameOver">
+  <div>PAHAHA DU OPFER🫵😂</div>
+  <button onclick="restartGame()">Neu starten</button>
+</div>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-const width = canvas.width;
-const height = canvas.height;
+let hearts = 0;
+const targetHearts = 40;
 
-// Spieler (Ball)
-const ball = {
-    x: width / 2,
-    y: height - 50,
-    radius: 20,
-    color: "#ff4d6d",
-    dy: 0
-};
+// Physik
+let gravity = 0.25;
+let jumpStrength = 12;
 
-// Gravitation & Sprungkraft
-const gravity = 0.3;       // langsamer fallen
-const jumpStrength = -8;   // nicht zu hoch springen
+// Ball
+let ball = {x:canvas.width/2, y:canvas.height-50, radius:25, dy:0, onPlatform:false, jumpCooldown:0};
 
 // Plattformen
 let platforms = [];
-const platformWidth = 100;
-const platformHeight = 20;
+let groundPlatform = {x:0, y:canvas.height-20, width:canvas.width, height:20, isGround:true};
+platforms.push(groundPlatform);
 
-// Startplattform unten
-platforms.push({
-    x: 0,
-    y: height - 20,
-    width: width,
-    height: 20,
-    temporary: true
-});
-
-// Herzen
-let hearts = [];
-let heartCount = 0;
-
-// Keyboard
-const keys = {};
-
-// Event Listener
-document.addEventListener("keydown", (e) => {
-    keys[e.code] = true;
-    if (e.code === "Space") {
-        ball.dy = jumpStrength;
-    }
-});
-document.addEventListener("keyup", (e) => keys[e.code] = false);
-
-// Mausklick erzwingt Sprung
-canvas.addEventListener("mousedown", () => {
-    ball.dy = jumpStrength;
-});
-
-// Plattform generieren
-function generatePlatform() {
-    const x = Math.random() * (width - platformWidth);
-    const y = Math.random() * (height - 50);
-    platforms.push({x, y, width: platformWidth, height: platformHeight});
+// Zufällige Plattformen
+for(let i=1;i<10;i++){
+  platforms.push({
+    x: Math.random()*(canvas.width-120),
+    y: canvas.height - i*120,
+    width: 120,
+    height:15,
+    isGround:false
+  });
 }
 
-// Herz generieren
-function generateHeart() {
-    const x = Math.random() * (width - 20);
-    const y = Math.random() * (height - 50);
-    hearts.push({x, y, size: 20});
+// Startsprung
+ball.dy = -jumpStrength;
+
+const gameOverDiv = document.getElementById("gameOver");
+
+function drawBall(){
+  ctx.fillStyle="#ff4fa0";
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.radius,0,Math.PI*2);
+  ctx.fill();
 }
 
-// Game Loop
-function update() {
-    // Ball Bewegung
-    ball.dy += gravity;
-    ball.y += ball.dy;
-
-    // Plattform-Kollision
-    let onPlatform = false;
-    for (let i = platforms.length - 1; i >= 0; i--) {
-        const p = platforms[i];
-        if (
-            ball.y + ball.radius > p.y &&
-            ball.y + ball.radius < p.y + p.height &&
-            ball.x > p.x &&
-            ball.x < p.x + p.width &&
-            ball.dy >= 0
-        ) {
-            ball.y = p.y - ball.radius;
-            ball.dy = jumpStrength;
-            onPlatform = true;
-
-            // Entferne temporäre Startplattform
-            if (p.temporary) {
-                platforms.splice(i,1);
-            }
-        }
-    }
-
-    // Herz-Kollision
-    for (let i = hearts.length -1; i >=0; i--) {
-        const h = hearts[i];
-        const distX = Math.abs(ball.x - (h.x + h.size/2));
-        const distY = Math.abs(ball.y - (h.y + h.size/2));
-        if (distX < ball.radius + h.size/2 && distY < ball.radius + h.size/2) {
-            hearts.splice(i,1);
-            heartCount++;
-            if (heartCount >= 40) {
-                alert("Du hast 40 Herzen gesammelt!");
-                window.location.href = "afterskyjump.html";
-            }
-        }
-    }
-
-    // Neustart bei Fall
-    if (ball.y - ball.radius > height) {
-        if (confirm("Du bist gefallen! Neustart?")) {
-            location.reload();
-        }
-    }
-
-    // Plattformen und Herzen nachfüllen
-    while(platforms.length < 6) generatePlatform();
-    while(hearts.length < 10) generateHeart();
+function drawPlatforms(){
+  ctx.fillStyle="#aa88aa";
+  platforms.forEach(p=>{
+    ctx.fillRect(p.x,p.y,p.width,p.height);
+  });
 }
 
-// Zeichnen
-function draw() {
-    ctx.clearRect(0,0,width,height);
+function update(){
+  if(ball.jumpCooldown > 0) ball.jumpCooldown--;
 
-    // Ball
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
-    ctx.fillStyle = ball.color;
-    ctx.fill();
-    ctx.closePath();
+  ball.dy += gravity;
+  ball.y += ball.dy;
+  ball.onPlatform = false;
 
-    // Plattformen
-    ctx.fillStyle = "#ffb3c6";
-    platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+  platforms.forEach((p,i)=>{
+    if(ball.x + ball.radius > p.x && ball.x - ball.radius < p.x + p.width &&
+       ball.y + ball.radius > p.y && ball.y + ball.radius < p.y + p.height &&
+       ball.dy > 0){
 
-    // Herzen
-    hearts.forEach(h => {
-        ctx.beginPath();
-        ctx.arc(h.x + h.size/2, h.y + h.size/2, h.size/2, 0, Math.PI*2);
-        ctx.fillStyle = "red";
-        ctx.fill();
-        ctx.closePath();
+      ball.y = p.y - ball.radius;
+      ball.onPlatform = true;
+
+      if(ball.jumpCooldown === 0){
+        if(!p.isGround){
+          ball.dy = -jumpStrength;
+          ball.jumpCooldown = 8;
+          hearts++;
+        }
+      }
+
+      // Bodenplattform verschwindet nach erstem Sprung auf echter Plattform
+      if(!p.isGround){
+        platforms = platforms.filter(pl => !pl.isGround);
+      }
+    }
+  });
+
+  // Scroll
+  if(ball.y < canvas.height/2){
+    let diff = canvas.height/2 - ball.y;
+    ball.y = canvas.height/2;
+    platforms.forEach(p=>{
+      p.y += diff;
+      if(p.y > canvas.height){
+        p.y = 0;
+        if(!p.isGround){
+          p.x = Math.random()*(canvas.width-120);
+        }
+      }
     });
+  }
 
-    // Herz-Zähler
-    ctx.fillStyle = "#000";
-    ctx.font = "20px Arial";
-    ctx.fillText("Herzen: " + heartCount, 10, 30);
+  // Herz-Ziel erreicht
+  if(hearts >= targetHearts){
+    setTimeout(()=>{ location.href="after1.html"; },500);
+  }
+
+  // Ball fällt zu weit → Game Over
+  if(ball.y > canvas.height){
+    showGameOver();
+  }
+
+  document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts}`;
 }
 
-// Main Loop
-function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
+// Rechtsklick für Notfall-Sprung
+document.addEventListener("contextmenu", (e)=>{
+  e.preventDefault(); // verhindert Kontextmenü
+  if(ball.jumpCooldown === 0){
+    ball.dy = -jumpStrength;
+    ball.jumpCooldown = 8;
+  }
+});
+
+function showGameOver(){
+  gameOverDiv.style.display = "flex";
 }
 
-// Start
-loop();
+function restartGame(){
+  ball.x = canvas.width/2;
+  ball.y = canvas.height-50;
+  ball.dy = -jumpStrength; // Startsprung
+  hearts = 0;
+  platforms = []; // alte Plattformen löschen
+
+  // Bodenplattform wieder hinzufügen
+  groundPlatform = {x:0, y:canvas.height-20, width:canvas.width, height:20, isGround:true};
+  platforms.push(groundPlatform);
+
+  // Zufällige Plattformen neu erzeugen
+  for(let i=1;i<10;i++){
+    platforms.push({
+      x: Math.random()*(canvas.width-120),
+      y: canvas.height - i*120,
+      width: 120,
+      height:15,
+      isGround:false
+    });
+  }
+
+  gameOverDiv.style.display = "none";
+}
+
+document.addEventListener("mousemove",(e)=>{
+  ball.x = e.clientX;
+});
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawPlatforms();
+  drawBall();
+  update();
+  requestAnimationFrame(draw);
+}
+
+draw();
 </script>
 
 </body>
