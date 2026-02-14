@@ -3,91 +3,174 @@
 <head>
 <meta charset="UTF-8">
 <title>Sky Jump</title>
+<link rel="stylesheet" href="style.css">
 <style>
-body {
-    margin: 0;
-    overflow: hidden;
-    background: linear-gradient(to bottom, #87ceeb, #ffffff);
-    font-family: Arial, sans-serif;
-}
-
-#player {
-    width: 50px;
-    height: 50px;
-    background: red;
-    position: absolute;
-    bottom: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 50%;
-}
-
-#platform {
-    width: 120px;
-    height: 20px;
-    background: green;
-    position: absolute;
-    bottom: 0;
-    left: 40%;
-}
-
-#winText {
-    position: absolute;
-    top: 40%;
-    width: 100%;
-    text-align: center;
-    font-size: 30px;
-    display: none;
+canvas {
+    background: #ffe6f0;
+    display: block;
+    margin: 0 auto;
 }
 </style>
 </head>
-
 <body>
 
-<div id="player"></div>
-<div id="platform"></div>
-<div id="winText">Du hast es geschafft! ❤️</div>
+<h1>Sky Jump</h1>
+<canvas id="gameCanvas" width="480" height="640"></canvas>
 
 <script>
-let player = document.getElementById("player");
-let platform = document.getElementById("platform");
-let winText = document.getElementById("winText");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-let velocity = 0;
-let gravity = 0.5;
-let jumping = false;
+const width = canvas.width;
+const height = canvas.height;
 
-document.addEventListener("keydown", function(event) {
-    if (event.code === "Space" && !jumping) {
-        velocity = 12;
-        jumping = true;
-    }
+// Spieler
+const ball = {
+    x: width / 2,
+    y: height - 50,
+    radius: 20,
+    color: "#ff4d6d",
+    dy: 0
+};
+
+// Gravitation & Sprungkraft
+const gravity = 0.4;       // anpassbar
+const jumpStrength = -10;  // anpassbar
+
+// Plattformen
+let platforms = [];
+const platformWidth = 100;
+const platformHeight = 20;
+
+// Startplattform unten
+platforms.push({
+    x: 0,
+    y: height - 20,
+    width: width,
+    height: 20,
+    temporary: true // verschwindet nach erstem richtigen Sprung
 });
 
-function gameLoop() {
-    velocity -= gravity;
-    let bottom = parseInt(window.getComputedStyle(player).bottom);
-    bottom += velocity;
+// Herzen
+let hearts = [];
+let heartCount = 0;
 
-    if (bottom <= 50) {
-        bottom = 50;
-        jumping = false;
+// Keyboard
+const keys = {};
+
+// Event Listener
+document.addEventListener("keydown", (e) => {
+    keys[e.code] = true;
+
+    // Optional: Rechtsklick erzwingt Sprung
+    if (e.code === "Space") {
+        ball.dy = jumpStrength;
     }
+});
+document.addEventListener("keyup", (e) => keys[e.code] = false);
 
-    player.style.bottom = bottom + "px";
-
-    // Win Condition
-    if (bottom > 300) {
-        winText.style.display = "block";
-        setTimeout(() => {
-            window.location.href = "afterskyjump.html";
-        }, 2000);
-    }
-
-    requestAnimationFrame(gameLoop);
+// Plattform generieren
+function generatePlatform() {
+    const x = Math.random() * (width - platformWidth);
+    const y = Math.random() * (height - 50);
+    platforms.push({x, y, width: platformWidth, height: platformHeight});
 }
 
-gameLoop();
+// Herzen generieren
+function generateHeart() {
+    const x = Math.random() * (width - 20);
+    const y = Math.random() * (height - 50);
+    hearts.push({x, y, size: 20});
+}
+
+// Game Loop
+function update() {
+    // Bewegung
+    ball.dy += gravity;
+    ball.y += ball.dy;
+
+    // Plattform-Kollision
+    let onPlatform = false;
+    for (let i = 0; i < platforms.length; i++) {
+        const p = platforms[i];
+        if (ball.y + ball.radius > p.y && 
+            ball.y + ball.radius < p.y + p.height &&
+            ball.x > p.x && ball.x < p.x + p.width &&
+            ball.dy >= 0
+        ) {
+            ball.y = p.y - ball.radius;
+            ball.dy = jumpStrength;
+            onPlatform = true;
+
+            // Entferne temporäre Startplattform
+            if (p.temporary) {
+                platforms.splice(i, 1);
+            }
+        }
+    }
+
+    // Herz-Kollision
+    for (let i = hearts.length -1; i >=0; i--) {
+        const h = hearts[i];
+        const distX = Math.abs(ball.x - (h.x + h.size/2));
+        const distY = Math.abs(ball.y - (h.y + h.size/2));
+        if (distX < ball.radius + h.size/2 && distY < ball.radius + h.size/2) {
+            hearts.splice(i,1);
+            heartCount++;
+            if (heartCount >= 40) {
+                // Spieler hat alle Herzen → nächste Story
+                alert("Du hast 40 Herzen gesammelt!");
+                window.location.href = "afterskyjump.html";
+            }
+        }
+    }
+
+    // Neustart bei Fall
+    if (ball.y - ball.radius > height) {
+        if (confirm("Du bist gefallen! Neustart?")) {
+            location.reload();
+        }
+    }
+
+    // Plattformen nachfüllen
+    while(platforms.length < 6) generatePlatform();
+    while(hearts.length < 10) generateHeart();
+}
+
+// Zeichnen
+function draw() {
+    ctx.clearRect(0,0,width,height);
+
+    // Ball
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+    ctx.fillStyle = ball.color;
+    ctx.fill();
+    ctx.closePath();
+
+    // Plattformen
+    ctx.fillStyle = "#ffb3c6";
+    platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+
+    // Herzen
+    ctx.fillStyle = "red";
+    hearts.forEach(h => ctx.fillRect(h.x, h.y, h.size, h.size));
+
+    // Herzen Counter
+    ctx.fillStyle = "#000";
+    ctx.font = "20px Arial";
+    ctx.fillText("Herzen: " + heartCount, 10, 30);
+}
+
+// Main Loop
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+// Start
+loop();
 </script>
 
 </body>
