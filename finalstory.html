@@ -2,27 +2,55 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Final Story</title>
-<link rel="stylesheet" href="style.css">
+<title>Finale</title>
+<style>
+body{
+  margin:0;
+  background:black;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  color:white;
+  font-family:sans-serif;
+  text-align:center;
+}
+img{
+  max-width:100%;
+  max-height:100%;
+  cursor:pointer;
+}
+#message{
+  display:none;
+  font-size:40px;
+}
+</style>
 </head>
-<body style="text-align:center; padding-top:100px; background:linear-gradient(#ffb6d5,#ffcce6);">
-<h1>💖 Happy End 💖</h1>
-<img id="storyImage" src="images/final1.jpg" style="width:50%; border-radius:10px; margin-top:30px;">
-<br>
-<button onclick="nextImage()">weiter →</button>
+<body>
+
+<img id="finalImage" src="images/final1.jpg">
+<div id="message">❤️ Happy Valentinstag ❤️</div>
 
 <script>
-let current = 1;
-const total = 2;
+let images = [
+  "images/final1.jpg",
+  "images/final2.jpg"
+];
 
-function nextImage(){
+let current = 0;
+const img = document.getElementById("finalImage");
+const message = document.getElementById("message");
+
+img.addEventListener("click", ()=>{
   current++;
-  if(current > total){
-    alert("Ende 💗"); // oder du kannst hier noch was anderes machen
-    return;
+  if(current < images.length){
+    img.src = images[current];
+  } else {
+    img.style.display="none";
+    message.style.display="block";
   }
-  document.getElementById("storyImage").src = "images/final" + current + ".jpg";
-}
+});
 </script>
+
 </body>
 </html>
