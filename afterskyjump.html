@@ -3,49 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <title>Story nach Skyjump</title>
-<style>
-body {
-    background: #ffe6f0;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding-top: 50px;
-}
-img {
-    width: 300px;
-    border-radius: 10px;
-    margin-top: 20px;
-}
-button {
-    margin-top: 30px;
-    padding: 15px 30px;
-    font-size: 18px;
-    border-radius: 8px;
-    border: none;
-    background-color: #ff4d6d;
-    color: white;
-    cursor: pointer;
-}
-button:hover {
-    background-color: #e60039;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <h1>Nach Skyjump</h1>
-
 <img id="storyImage" src="images/after1.jpg" alt="Bild">
-
 <button id="nextBtn">Weiter</button>
 
 <script>
 let current = 1;
-const total = 4; // 4 Bilder in der zweiten Story
+const total = 4;
 
 document.getElementById("nextBtn").addEventListener("click", function() {
     current++;
     if (current > total) {
-        // Nach Story 2 geht es zu Cross the Road
+        // Weiter zu Cross the Road
         window.location.href = "crossroad.html";
     } else {
         document.getElementById("storyImage").src = "images/after" + current + ".jpg";
