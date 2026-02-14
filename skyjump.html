@@ -21,9 +21,51 @@ canvas{ display:block; }
   margin-top:20px; padding:10px 20px; font-size:24px; cursor:pointer;
   background:#ff4fa0; border:none; color:white; border-radius:8px;
 }
+
+/* Anleitung Screen */
+#intro{
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.85);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  text-align:center;
+  font-family:sans-serif;
+  padding:40px;
+}
+#intro button{
+  margin-top:20px;
+  padding:12px 25px;
+  font-size:22px;
+  cursor:pointer;
+  background:#ff4fa0;
+  border:none;
+  color:white;
+  border-radius:8px;
+}
 </style>
 </head>
 <body>
+
+<!-- ANLEITUNG -->
+<div id="intro">
+  <h1>🌸 SkyJump 🌸</h1>
+  <p>
+  Der Ball ist in ein tiefes Herz-Loch gefallen! 💖<br><br>
+  Nur durch geschicktes Springen über die Plattformen kann er sich wieder nach oben kämpfen.<br>
+  Sammle <b>40 Herzen</b>, um aus dem Loch zu entkommen!
+  </p>
+  <p>
+  Steuerung:<br>
+  🖱 Maus bewegen = Ball bewegen<br>
+  🖱 Rechtsklick = Notfall-Sprung
+  </p>
+  <button onclick="startGame()">Spiel starten</button>
+</div>
 
 <canvas id="game"></canvas>
 <div id="hud">Herzen: 0 / 40</div>
@@ -39,22 +81,20 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+let gameStarted = false;
+
 let hearts = 0;
 const targetHearts = 40;
 
-// Physik
 let gravity = 0.25;
 let jumpStrength = 12;
 
-// Ball
 let ball = {x:canvas.width/2, y:canvas.height-50, radius:25, dy:0, onPlatform:false, jumpCooldown:0};
 
-// Plattformen
 let platforms = [];
 let groundPlatform = {x:0, y:canvas.height-20, width:canvas.width, height:20, isGround:true};
 platforms.push(groundPlatform);
 
-// Zufällige Plattformen
 for(let i=1;i<10;i++){
   platforms.push({
     x: Math.random()*(canvas.width-120),
@@ -65,10 +105,14 @@ for(let i=1;i<10;i++){
   });
 }
 
-// Startsprung
 ball.dy = -jumpStrength;
 
 const gameOverDiv = document.getElementById("gameOver");
+
+function startGame(){
+  document.getElementById("intro").style.display = "none";
+  gameStarted = true;
+}
 
 function drawBall(){
   ctx.fillStyle="#ff4fa0";
@@ -85,6 +129,8 @@ function drawPlatforms(){
 }
 
 function update(){
+  if(!gameStarted) return;
+
   if(ball.jumpCooldown > 0) ball.jumpCooldown--;
 
   ball.dy += gravity;
@@ -107,14 +153,12 @@ function update(){
         }
       }
 
-      // Bodenplattform verschwindet nach erstem Sprung auf echter Plattform
       if(!p.isGround){
         platforms = platforms.filter(pl => !pl.isGround);
       }
     }
   });
 
-  // Scroll
   if(ball.y < canvas.height/2){
     let diff = canvas.height/2 - ball.y;
     ball.y = canvas.height/2;
@@ -129,12 +173,10 @@ function update(){
     });
   }
 
-  // Herz-Ziel erreicht → Weiterleitung zu afterskyjump.html
   if(hearts >= targetHearts){
     setTimeout(()=>{ location.href="afterskyjump.html"; },500);
   }
 
-  // Ball fällt zu weit → Game Over
   if(ball.y > canvas.height){
     showGameOver();
   }
@@ -142,9 +184,8 @@ function update(){
   document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts}`;
 }
 
-// Rechtsklick für Notfall-Sprung
 document.addEventListener("contextmenu", (e)=>{
-  e.preventDefault(); // verhindert Kontextmenü
+  e.preventDefault();
   if(ball.jumpCooldown === 0){
     ball.dy = -jumpStrength;
     ball.jumpCooldown = 8;
@@ -158,15 +199,13 @@ function showGameOver(){
 function restartGame(){
   ball.x = canvas.width/2;
   ball.y = canvas.height-50;
-  ball.dy = -jumpStrength; // Startsprung
+  ball.dy = -jumpStrength;
   hearts = 0;
-  platforms = []; // alte Plattformen löschen
+  platforms = [];
 
-  // Bodenplattform wieder hinzufügen
   groundPlatform = {x:0, y:canvas.height-20, width:canvas.width, height:20, isGround:true};
   platforms.push(groundPlatform);
 
-  // Zufällige Plattformen neu erzeugen
   for(let i=1;i<10;i++){
     platforms.push({
       x: Math.random()*(canvas.width-120),
