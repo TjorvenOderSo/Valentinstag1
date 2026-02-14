@@ -3,40 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <title>Valentinstagsgeschenk</title>
-<style>
-body {
-    background: #ffdde1;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding-top: 100px;
-}
-
-button {
-    padding: 20px 40px;
-    font-size: 20px;
-    border: none;
-    border-radius: 10px;
-    background-color: #ff4d6d;
-    color: white;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-button:hover {
-    background-color: #e60039;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h1>Ich habe eine Überraschung für dich 💌</h1>
-<button onclick="startGift()">Valentinstagsgeschenk</button>
+<h1>Valentinstagsgeschenk</h1>
+<button id="startBtn">Buch öffnen</button>
 
 <script>
-function startGift() {
-    window.location.href = "skyjump.html";
-}
+document.getElementById("startBtn").addEventListener("click", function() {
+    // Starte die erste Story
+    window.location.href = "story.html";
+});
 </script>
 
 </body>
