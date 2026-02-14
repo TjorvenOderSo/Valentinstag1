@@ -2,28 +2,36 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Cross The Road</title>
+<title>Crossroad</title>
 <style>
-body{
-  margin:0;
-  overflow:hidden;
-  background:#ffe0f0;
-  font-family:sans-serif;
-}
+body{ margin:0; overflow:hidden; background:#87ceeb;}
 canvas{ display:block; }
 #hud{
-  position:absolute;
-  top:10px;
-  left:10px;
-  font-size:22px;
-  color:#ff4fa0;
+  position:absolute; top:10px; left:10px; color:white; font-family:sans-serif; font-size:22px;
+}
+#gameOver{
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  color:white; font-family:sans-serif;
+  display:flex; justify-content:center; align-items:center;
+  flex-direction:column; font-size:30px;
+  display:none;
+}
+#gameOver button{
+  margin-top:20px; padding:10px 20px; font-size:24px; cursor:pointer;
+  background:#ff4fa0; border:none; color:white; border-radius:8px;
 }
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
-<div id="hud">Herzen: 0 / 20</div>
+<div id="hud">Herzen: 0 / 20 | Leben: 3</div>
+
+<div id="gameOver">
+  <div>Game Over!</div>
+  <button onclick="restartGame()">Neu starten</button>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -31,76 +39,167 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Ball
+let ball = {x:canvas.width/2, y:canvas.height-60, radius:25, speed:7, lives:3};
+
+// Herzchen
 let hearts = 0;
-const target = 20;
+const targetHearts = 20;
+let heartItems = [];
 
-let player = {x:canvas.width/2, y:canvas.height-60, size:30};
-
+// Autos
 let cars = [];
-for(let i=0;i<5;i++){
-  cars.push({
-    x: Math.random()*canvas.width,
-    y: 100 + i*100,
-    width: 80,
-    height: 40,
-    speed: 2 + Math.random()*2
-  });
+const carSpeed = 5;
+const carWidth = 80;
+const carHeight = 40;
+
+// Leitplanken (links + rechts)
+const barriers = [
+  {x:0, y:0, width:50, height:canvas.height},
+  {x:canvas.width-50, y:0, width:50, height:canvas.height}
+];
+
+const gameOverDiv = document.getElementById("gameOver");
+
+function spawnCars(){
+  if(cars.length < 5){
+    const laneX = 50 + Math.random()*(canvas.width-100-carWidth);
+    cars.push({x:laneX, y:-50, width:carWidth, height:carHeight});
+  }
 }
 
-function drawPlayer(){
+function spawnHearts(){
+  if(heartItems.length < 3){
+    const hx = 50 + Math.random()*(canvas.width-100-30);
+    const hy = Math.random()*canvas.height/2;
+    heartItems.push({x:hx, y:hy, radius:15});
+  }
+}
+
+function drawBall(){
   ctx.fillStyle="#ff4fa0";
-  ctx.fillRect(player.x, player.y, player.size, player.size);
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.radius,0,Math.PI*2);
+  ctx.fill();
 }
 
 function drawCars(){
-  ctx.fillStyle="#444";
-  cars.forEach(car=>{
-    ctx.fillRect(car.x, car.y, car.width, car.height);
+  ctx.fillStyle="red";
+  cars.forEach(c=>{
+    ctx.fillRect(c.x, c.y, c.width, c.height);
+  });
+}
+
+function drawHearts(){
+  ctx.fillStyle="pink";
+  heartItems.forEach(h=>{
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.radius,0,Math.PI*2);
+    ctx.fill();
+  });
+}
+
+function drawBarriers(){
+  ctx.fillStyle="#555";
+  barriers.forEach(b=>{
+    ctx.fillRect(b.x,b.y,b.width,b.height);
   });
 }
 
 function update(){
-  cars.forEach(car=>{
-    car.x += car.speed;
-    if(car.x > canvas.width) car.x = -car.width;
+  // Autos bewegen
+  cars.forEach(c=>{
+    c.y += carSpeed;
+  });
 
-    if(player.x < car.x + car.width &&
-       player.x + player.size > car.x &&
-       player.y < car.y + car.height &&
-       player.y + player.size > car.y){
-         player.y = canvas.height-60;
-         hearts = 0;
+  // Autos rausnehmen, wenn sie weg
+  cars = cars.filter(c=>c.y<canvas.height+50);
+
+  // Herzchen sammeln
+  heartItems.forEach((h,i)=>{
+    const dx = h.x - ball.x;
+    const dy = h.y - ball.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if(dist < h.radius + ball.radius){
+      hearts++;
+      heartItems.splice(i,1);
     }
   });
 
-  if(player.y < 0){
-    hearts++;
-    player.y = canvas.height-60;
+  // Ball mit Autos kollidieren
+  cars.forEach((c,i)=>{
+    if(ball.x + ball.radius > c.x && ball.x - ball.radius < c.x + c.width &&
+       ball.y + ball.radius > c.y && ball.y - ball.radius < c.y + c.height){
+      ball.lives--;
+      cars.splice(i,1);
+    }
+  });
+
+  // Ball mit Barrieren
+  barriers.forEach(b=>{
+    if(ball.x + ball.radius > b.x && ball.x - ball.radius < b.x + b.width){
+      ball.lives--;
+      // Ball wieder in Spielbereich setzen
+      if(b.x < canvas.width/2) ball.x = b.x + b.width + ball.radius + 1;
+      else ball.x = b.x - ball.radius -1;
+    }
+  });
+
+  // Leben prüfen
+  if(ball.lives <= 0){
+    showGameOver();
   }
 
-  if(hearts >= target){
+  // Ziel erreicht
+  if(hearts >= targetHearts){
     setTimeout(()=>{ location.href="finalstory.html"; },500);
   }
 
-  document.getElementById("hud").innerText = `Herzen: ${hearts} / ${target}`;
+  document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts} | Leben: ${ball.lives}`;
 }
 
+// Steuerung mit Pfeiltasten
 document.addEventListener("keydown",(e)=>{
-  if(e.key==="ArrowUp") player.y -= 40;
-  if(e.key==="ArrowDown") player.y += 40;
-  if(e.key==="ArrowLeft") player.x -= 40;
-  if(e.key==="ArrowRight") player.x += 40;
+  if(e.key==="ArrowLeft" || e.key==="a") ball.x -= ball.speed;
+  if(e.key==="ArrowRight" || e.key==="d") ball.x += ball.speed;
+  if(e.key==="ArrowUp" || e.key==="w") ball.y -= ball.speed;
+  if(e.key==="ArrowDown" || e.key==="s") ball.y += ball.speed;
+
+  // Grenzen oben/unten
+  if(ball.y < 0) ball.y = 0;
+  if(ball.y > canvas.height) ball.y = canvas.height;
 });
+
+function showGameOver(){
+  gameOverDiv.style.display = "flex";
+}
+
+function restartGame(){
+  ball.x = canvas.width/2;
+  ball.y = canvas.height-60;
+  ball.lives = 3;
+  hearts = 0;
+  cars = [];
+  heartItems = [];
+  gameOverDiv.style.display = "none";
+}
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBarriers();
+  drawHearts();
+  drawBall();
   drawCars();
-  drawPlayer();
   update();
+
+  spawnCars();
+  spawnHearts();
+
   requestAnimationFrame(draw);
 }
 
 draw();
 </script>
+
 </body>
 </html>
