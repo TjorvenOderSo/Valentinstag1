@@ -4,22 +4,45 @@
 <meta charset="UTF-8">
 <title>Crossroad</title>
 <style>
-body{ margin:0; overflow:hidden; background:#87ceeb;}
+body{
+  margin:0;
+  overflow:hidden;
+  background:#87ceeb;
+}
 canvas{ display:block; }
+
 #hud{
-  position:absolute; top:10px; left:10px; color:white; font-family:sans-serif; font-size:22px;
+  position:absolute;
+  top:15px;
+  left:15px;
+  font-family:sans-serif;
+  font-size:22px;
+  color:white;
 }
+
 #gameOver{
-  position:absolute; top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.7);
-  color:white; font-family:sans-serif;
-  display:flex; justify-content:center; align-items:center;
-  flex-direction:column; font-size:30px;
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.75);
   display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  color:white;
+  font-family:sans-serif;
+  font-size:32px;
 }
+
 #gameOver button{
-  margin-top:20px; padding:10px 20px; font-size:24px; cursor:pointer;
-  background:#ff4fa0; border:none; color:white; border-radius:8px;
+  margin-top:20px;
+  padding:12px 25px;
+  font-size:20px;
+  border:none;
+  border-radius:8px;
+  background:#ff4fa0;
+  color:white;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -29,76 +52,73 @@ canvas{ display:block; }
 <div id="hud">Herzen: 0 / 20 | Leben: 3</div>
 
 <div id="gameOver">
-  <div>Game Over!</div>
+  <div>Game Over 💀</div>
   <button onclick="restartGame()">Neu starten</button>
 </div>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Ball (jetzt schneller!)
-let ball = {x:canvas.width/2, y:canvas.height-80, radius:25, speed:12, lives:3};
+/* ============================= */
+/*           SETTINGS            */
+/* ============================= */
 
-// Ziel
-let hearts = 0;
 const targetHearts = 20;
+const carSpeed = 3.5;        // ruhig
+const heartSpeed = 1.5;      // gut sammelbar
+const spawnCarRate = 70;     // höher = weniger Autos
+const spawnHeartRate = 40;   // niedriger = mehr Herzen
 
-// Fallende Herzen
-let heartItems = [];
-const heartFallSpeed = 2.5; // langsamer als Autos
+/* ============================= */
 
-// Autos
+let frame = 0;
+
+let player = {
+  x: canvas.width/2,
+  y: canvas.height-100,
+  radius: 22,
+  speed: 6,
+  lives: 3
+};
+
 let cars = [];
-const carSpeed = 6;
-const carWidth = 90;
-const carHeight = 45;
+let hearts = [];
+let collected = 0;
 
-// Leitplanken
 const barriers = [
-  {x:0, y:0, width:60, height:canvas.height},
-  {x:canvas.width-60, y:0, width:60, height:canvas.height}
+  {x:0, width:70},
+  {x:canvas.width-70, width:70}
 ];
 
 const gameOverDiv = document.getElementById("gameOver");
 
-// Autos erzeugen
-function spawnCars(){
-  if(cars.length < 6){
-    const laneX = 60 + Math.random()*(canvas.width-120-carWidth);
-    cars.push({x:laneX, y:-50, width:carWidth, height:carHeight});
-  }
-}
+/* ============================= */
+/*           DRAWING             */
+/* ============================= */
 
-// Herzen erzeugen (fallen von oben!)
-function spawnHearts(){
-  if(heartItems.length < 4){
-    const hx = 60 + Math.random()*(canvas.width-120);
-    heartItems.push({x:hx, y:-30, radius:18});
-  }
-}
-
-function drawBall(){
+function drawPlayer(){
   ctx.fillStyle="#ff4fa0";
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius,0,Math.PI*2);
+  ctx.arc(player.x, player.y, player.radius,0,Math.PI*2);
   ctx.fill();
 }
 
 function drawCars(){
   ctx.fillStyle="red";
-  cars.forEach(c=>{
-    ctx.fillRect(c.x, c.y, c.width, c.height);
+  cars.forEach(car=>{
+    ctx.fillRect(car.x, car.y, car.w, car.h);
   });
 }
 
 function drawHearts(){
   ctx.fillStyle="pink";
-  heartItems.forEach(h=>{
+  hearts.forEach(h=>{
     ctx.beginPath();
-    ctx.arc(h.x, h.y, h.radius,0,Math.PI*2);
+    ctx.arc(h.x, h.y, h.r,0,Math.PI*2);
     ctx.fill();
   });
 }
@@ -106,108 +126,133 @@ function drawHearts(){
 function drawBarriers(){
   ctx.fillStyle="#444";
   barriers.forEach(b=>{
-    ctx.fillRect(b.x,b.y,b.width,b.height);
+    ctx.fillRect(b.x,0,b.width,canvas.height);
   });
 }
+
+/* ============================= */
+/*            UPDATE             */
+/* ============================= */
 
 function update(){
 
-  // Autos bewegen
-  cars.forEach(c=> c.y += carSpeed);
-  cars = cars.filter(c=>c.y<canvas.height+60);
+  frame++;
 
-  // Herzen bewegen (langsamer!)
-  heartItems.forEach(h=> h.y += heartFallSpeed);
-  heartItems = heartItems.filter(h=>h.y<canvas.height+40);
-
-  // Herz sammeln
-  heartItems.forEach((h,i)=>{
-    const dx = h.x - ball.x;
-    const dy = h.y - ball.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if(dist < h.radius + ball.radius){
-      hearts++;
-      heartItems.splice(i,1);
-    }
-  });
-
-  // Auto Kollision
-  cars.forEach((c,i)=>{
-    if(ball.x + ball.radius > c.x && ball.x - ball.radius < c.x + c.width &&
-       ball.y + ball.radius > c.y && ball.y - ball.radius < c.y + c.height){
-      ball.lives--;
-      cars.splice(i,1);
-    }
-  });
-
-  // Barrieren Kollision
-  barriers.forEach(b=>{
-    if(ball.x + ball.radius > b.x && ball.x - ball.radius < b.x + b.width){
-      ball.lives--;
-      if(b.x < canvas.width/2) ball.x = b.x + b.width + ball.radius + 1;
-      else ball.x = b.x - ball.radius -1;
-    }
-  });
-
-  if(ball.lives <= 0){
-    showGameOver();
+  /* Spawn Cars */
+  if(frame % spawnCarRate === 0){
+    const x = 80 + Math.random()*(canvas.width-160-80);
+    cars.push({x:x, y:-60, w:80, h:40});
   }
 
-  if(hearts >= targetHearts){
+  /* Spawn Hearts */
+  if(frame % spawnHeartRate === 0){
+    const x = 80 + Math.random()*(canvas.width-160);
+    hearts.push({x:x, y:-30, r:15});
+  }
+
+  /* Move Cars */
+  cars.forEach(car=> car.y += carSpeed);
+  cars = cars.filter(car=> car.y < canvas.height+50);
+
+  /* Move Hearts */
+  hearts.forEach(h=> h.y += heartSpeed);
+  hearts = hearts.filter(h=> h.y < canvas.height+40);
+
+  /* Heart Collision */
+  hearts.forEach((h,i)=>{
+    const dx = h.x - player.x;
+    const dy = h.y - player.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if(dist < h.r + player.radius){
+      collected++;
+      hearts.splice(i,1);
+    }
+  });
+
+  /* Car Collision */
+  cars.forEach((car,i)=>{
+    if(player.x + player.radius > car.x &&
+       player.x - player.radius < car.x + car.w &&
+       player.y + player.radius > car.y &&
+       player.y - player.radius < car.y + car.h){
+        player.lives--;
+        cars.splice(i,1);
+    }
+  });
+
+  /* Barrier Collision */
+  barriers.forEach(b=>{
+    if(player.x - player.radius < b.x + b.width &&
+       player.x + player.radius > b.x){
+        player.lives--;
+        if(b.x === 0)
+          player.x = b.x + b.width + player.radius + 1;
+        else
+          player.x = b.x - player.radius - 1;
+    }
+  });
+
+  /* Top/Bottom Limit */
+  if(player.y < 0) player.y = 0;
+  if(player.y > canvas.height-player.radius)
+    player.y = canvas.height-player.radius;
+
+  /* Win Condition */
+  if(collected >= targetHearts){
     setTimeout(()=>{ location.href="finalstory.html"; },500);
   }
 
+  /* Lose Condition */
+  if(player.lives <= 0){
+    gameOverDiv.style.display="flex";
+  }
+
   document.getElementById("hud").innerText =
-    `Herzen: ${hearts} / ${targetHearts} | Leben: ${ball.lives}`;
+    `Herzen: ${collected} / ${targetHearts} | Leben: ${player.lives}`;
 }
 
-// Dauerhafte Bewegung bei gedrückter Taste
+/* ============================= */
+/*          MOVEMENT             */
+/* ============================= */
+
 const keys = {};
+
 document.addEventListener("keydown",(e)=> keys[e.key]=true);
 document.addEventListener("keyup",(e)=> keys[e.key]=false);
 
 function handleMovement(){
-  if(keys["ArrowLeft"] || keys["a"]) ball.x -= ball.speed;
-  if(keys["ArrowRight"] || keys["d"]) ball.x += ball.speed;
-  if(keys["ArrowUp"] || keys["w"]) ball.y -= ball.speed;
-  if(keys["ArrowDown"] || keys["s"]) ball.y += ball.speed;
-
-  // Obere / untere Begrenzung
-  if(ball.y < 0) ball.y = 0;
-  if(ball.y > canvas.height-ball.radius) ball.y = canvas.height-ball.radius;
+  if(keys["ArrowLeft"] || keys["a"]) player.x -= player.speed;
+  if(keys["ArrowRight"] || keys["d"]) player.x += player.speed;
+  if(keys["ArrowUp"] || keys["w"]) player.y -= player.speed;
+  if(keys["ArrowDown"] || keys["s"]) player.y += player.speed;
 }
 
-function showGameOver(){
-  gameOverDiv.style.display = "flex";
-}
+/* ============================= */
 
 function restartGame(){
-  ball.x = canvas.width/2;
-  ball.y = canvas.height-80;
-  ball.lives = 3;
-  hearts = 0;
+  player.x = canvas.width/2;
+  player.y = canvas.height-100;
+  player.lives = 3;
+  collected = 0;
   cars = [];
-  heartItems = [];
-  gameOverDiv.style.display = "none";
+  hearts = [];
+  gameOverDiv.style.display="none";
 }
 
-function draw(){
+/* ============================= */
+
+function gameLoop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   handleMovement();
   drawBarriers();
   drawHearts();
-  drawBall();
   drawCars();
+  drawPlayer();
   update();
-
-  spawnCars();
-  spawnHearts();
-
-  requestAnimationFrame(draw);
+  requestAnimationFrame(gameLoop);
 }
 
-draw();
+gameLoop();
 </script>
-
 </body>
 </html>
