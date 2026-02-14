@@ -2,47 +2,29 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>After Story</title>
+<title>Für dich ❤️</title>
 <style>
-body{
-  margin:0;
-  background:black;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+body {
+    background: #ffe6f0;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding-top: 100px;
 }
-img{
-  max-width:100%;
-  max-height:100%;
-  cursor:pointer;
+
+img {
+    width: 300px;
+    border-radius: 15px;
+    margin-top: 20px;
 }
 </style>
 </head>
+
 <body>
 
-<img id="storyImage" src="images/after1.jpg">
+<h1>Du hast es geschafft 💖</h1>
+<p>Ich liebe dich mehr als Worte sagen können.</p>
 
-<script>
-let images = [
-  "images/after1.jpg",
-  "images/after2.jpg",
-  "images/after3.jpg",
-  "images/after4.jpg"
-];
-
-let current = 0;
-const img = document.getElementById("storyImage");
-
-img.addEventListener("click", ()=>{
-  current++;
-  if(current < images.length){
-    img.src = images[current];
-  } else {
-    location.href = "crossroad.html";
-  }
-});
-</script>
+<img src="images/bild1.jpg" alt="Bild">
 
 </body>
 </html>
