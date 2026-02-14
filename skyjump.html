@@ -9,6 +9,7 @@ canvas {
     background: #ffe6f0;
     display: block;
     margin: 0 auto;
+    border: 2px solid #ff4d6d;
 }
 </style>
 </head>
@@ -24,7 +25,7 @@ const ctx = canvas.getContext("2d");
 const width = canvas.width;
 const height = canvas.height;
 
-// Spieler
+// Spieler (Ball)
 const ball = {
     x: width / 2,
     y: height - 50,
@@ -34,8 +35,8 @@ const ball = {
 };
 
 // Gravitation & Sprungkraft
-const gravity = 0.4;       // anpassbar
-const jumpStrength = -10;  // anpassbar
+const gravity = 0.3;       // langsamer fallen
+const jumpStrength = -8;   // nicht zu hoch springen
 
 // Plattformen
 let platforms = [];
@@ -48,7 +49,7 @@ platforms.push({
     y: height - 20,
     width: width,
     height: 20,
-    temporary: true // verschwindet nach erstem richtigen Sprung
+    temporary: true
 });
 
 // Herzen
@@ -61,13 +62,16 @@ const keys = {};
 // Event Listener
 document.addEventListener("keydown", (e) => {
     keys[e.code] = true;
-
-    // Optional: Rechtsklick erzwingt Sprung
     if (e.code === "Space") {
         ball.dy = jumpStrength;
     }
 });
 document.addEventListener("keyup", (e) => keys[e.code] = false);
+
+// Mausklick erzwingt Sprung
+canvas.addEventListener("mousedown", () => {
+    ball.dy = jumpStrength;
+});
 
 // Plattform generieren
 function generatePlatform() {
@@ -76,7 +80,7 @@ function generatePlatform() {
     platforms.push({x, y, width: platformWidth, height: platformHeight});
 }
 
-// Herzen generieren
+// Herz generieren
 function generateHeart() {
     const x = Math.random() * (width - 20);
     const y = Math.random() * (height - 50);
@@ -85,17 +89,19 @@ function generateHeart() {
 
 // Game Loop
 function update() {
-    // Bewegung
+    // Ball Bewegung
     ball.dy += gravity;
     ball.y += ball.dy;
 
     // Plattform-Kollision
     let onPlatform = false;
-    for (let i = 0; i < platforms.length; i++) {
+    for (let i = platforms.length - 1; i >= 0; i--) {
         const p = platforms[i];
-        if (ball.y + ball.radius > p.y && 
+        if (
+            ball.y + ball.radius > p.y &&
             ball.y + ball.radius < p.y + p.height &&
-            ball.x > p.x && ball.x < p.x + p.width &&
+            ball.x > p.x &&
+            ball.x < p.x + p.width &&
             ball.dy >= 0
         ) {
             ball.y = p.y - ball.radius;
@@ -104,7 +110,7 @@ function update() {
 
             // Entferne temporäre Startplattform
             if (p.temporary) {
-                platforms.splice(i, 1);
+                platforms.splice(i,1);
             }
         }
     }
@@ -118,7 +124,6 @@ function update() {
             hearts.splice(i,1);
             heartCount++;
             if (heartCount >= 40) {
-                // Spieler hat alle Herzen → nächste Story
                 alert("Du hast 40 Herzen gesammelt!");
                 window.location.href = "afterskyjump.html";
             }
@@ -132,7 +137,7 @@ function update() {
         }
     }
 
-    // Plattformen nachfüllen
+    // Plattformen und Herzen nachfüllen
     while(platforms.length < 6) generatePlatform();
     while(hearts.length < 10) generateHeart();
 }
@@ -153,10 +158,15 @@ function draw() {
     platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
 
     // Herzen
-    ctx.fillStyle = "red";
-    hearts.forEach(h => ctx.fillRect(h.x, h.y, h.size, h.size));
+    hearts.forEach(h => {
+        ctx.beginPath();
+        ctx.arc(h.x + h.size/2, h.y + h.size/2, h.size/2, 0, Math.PI*2);
+        ctx.fillStyle = "red";
+        ctx.fill();
+        ctx.closePath();
+    });
 
-    // Herzen Counter
+    // Herz-Zähler
     ctx.fillStyle = "#000";
     ctx.font = "20px Arial";
     ctx.fillText("Herzen: " + heartCount, 10, 30);
