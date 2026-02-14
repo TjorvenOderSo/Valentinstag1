@@ -39,40 +39,44 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Ball
-let ball = {x:canvas.width/2, y:canvas.height-60, radius:25, speed:7, lives:3};
+// Ball (jetzt schneller!)
+let ball = {x:canvas.width/2, y:canvas.height-80, radius:25, speed:12, lives:3};
 
-// Herzchen
+// Ziel
 let hearts = 0;
 const targetHearts = 20;
+
+// Fallende Herzen
 let heartItems = [];
+const heartFallSpeed = 2.5; // langsamer als Autos
 
 // Autos
 let cars = [];
-const carSpeed = 5;
-const carWidth = 80;
-const carHeight = 40;
+const carSpeed = 6;
+const carWidth = 90;
+const carHeight = 45;
 
-// Leitplanken (links + rechts)
+// Leitplanken
 const barriers = [
-  {x:0, y:0, width:50, height:canvas.height},
-  {x:canvas.width-50, y:0, width:50, height:canvas.height}
+  {x:0, y:0, width:60, height:canvas.height},
+  {x:canvas.width-60, y:0, width:60, height:canvas.height}
 ];
 
 const gameOverDiv = document.getElementById("gameOver");
 
+// Autos erzeugen
 function spawnCars(){
-  if(cars.length < 5){
-    const laneX = 50 + Math.random()*(canvas.width-100-carWidth);
+  if(cars.length < 6){
+    const laneX = 60 + Math.random()*(canvas.width-120-carWidth);
     cars.push({x:laneX, y:-50, width:carWidth, height:carHeight});
   }
 }
 
+// Herzen erzeugen (fallen von oben!)
 function spawnHearts(){
-  if(heartItems.length < 3){
-    const hx = 50 + Math.random()*(canvas.width-100-30);
-    const hy = Math.random()*canvas.height/2;
-    heartItems.push({x:hx, y:hy, radius:15});
+  if(heartItems.length < 4){
+    const hx = 60 + Math.random()*(canvas.width-120);
+    heartItems.push({x:hx, y:-30, radius:18});
   }
 }
 
@@ -100,22 +104,23 @@ function drawHearts(){
 }
 
 function drawBarriers(){
-  ctx.fillStyle="#555";
+  ctx.fillStyle="#444";
   barriers.forEach(b=>{
     ctx.fillRect(b.x,b.y,b.width,b.height);
   });
 }
 
 function update(){
+
   // Autos bewegen
-  cars.forEach(c=>{
-    c.y += carSpeed;
-  });
+  cars.forEach(c=> c.y += carSpeed);
+  cars = cars.filter(c=>c.y<canvas.height+60);
 
-  // Autos rausnehmen, wenn sie weg
-  cars = cars.filter(c=>c.y<canvas.height+50);
+  // Herzen bewegen (langsamer!)
+  heartItems.forEach(h=> h.y += heartFallSpeed);
+  heartItems = heartItems.filter(h=>h.y<canvas.height+40);
 
-  // Herzchen sammeln
+  // Herz sammeln
   heartItems.forEach((h,i)=>{
     const dx = h.x - ball.x;
     const dy = h.y - ball.y;
@@ -126,7 +131,7 @@ function update(){
     }
   });
 
-  // Ball mit Autos kollidieren
+  // Auto Kollision
   cars.forEach((c,i)=>{
     if(ball.x + ball.radius > c.x && ball.x - ball.radius < c.x + c.width &&
        ball.y + ball.radius > c.y && ball.y - ball.radius < c.y + c.height){
@@ -135,40 +140,42 @@ function update(){
     }
   });
 
-  // Ball mit Barrieren
+  // Barrieren Kollision
   barriers.forEach(b=>{
     if(ball.x + ball.radius > b.x && ball.x - ball.radius < b.x + b.width){
       ball.lives--;
-      // Ball wieder in Spielbereich setzen
       if(b.x < canvas.width/2) ball.x = b.x + b.width + ball.radius + 1;
       else ball.x = b.x - ball.radius -1;
     }
   });
 
-  // Leben prüfen
   if(ball.lives <= 0){
     showGameOver();
   }
 
-  // Ziel erreicht
   if(hearts >= targetHearts){
     setTimeout(()=>{ location.href="finalstory.html"; },500);
   }
 
-  document.getElementById("hud").innerText = `Herzen: ${hearts} / ${targetHearts} | Leben: ${ball.lives}`;
+  document.getElementById("hud").innerText =
+    `Herzen: ${hearts} / ${targetHearts} | Leben: ${ball.lives}`;
 }
 
-// Steuerung mit Pfeiltasten
-document.addEventListener("keydown",(e)=>{
-  if(e.key==="ArrowLeft" || e.key==="a") ball.x -= ball.speed;
-  if(e.key==="ArrowRight" || e.key==="d") ball.x += ball.speed;
-  if(e.key==="ArrowUp" || e.key==="w") ball.y -= ball.speed;
-  if(e.key==="ArrowDown" || e.key==="s") ball.y += ball.speed;
+// Dauerhafte Bewegung bei gedrückter Taste
+const keys = {};
+document.addEventListener("keydown",(e)=> keys[e.key]=true);
+document.addEventListener("keyup",(e)=> keys[e.key]=false);
 
-  // Grenzen oben/unten
+function handleMovement(){
+  if(keys["ArrowLeft"] || keys["a"]) ball.x -= ball.speed;
+  if(keys["ArrowRight"] || keys["d"]) ball.x += ball.speed;
+  if(keys["ArrowUp"] || keys["w"]) ball.y -= ball.speed;
+  if(keys["ArrowDown"] || keys["s"]) ball.y += ball.speed;
+
+  // Obere / untere Begrenzung
   if(ball.y < 0) ball.y = 0;
-  if(ball.y > canvas.height) ball.y = canvas.height;
-});
+  if(ball.y > canvas.height-ball.radius) ball.y = canvas.height-ball.radius;
+}
 
 function showGameOver(){
   gameOverDiv.style.display = "flex";
@@ -176,7 +183,7 @@ function showGameOver(){
 
 function restartGame(){
   ball.x = canvas.width/2;
-  ball.y = canvas.height-60;
+  ball.y = canvas.height-80;
   ball.lives = 3;
   hearts = 0;
   cars = [];
@@ -186,6 +193,7 @@ function restartGame(){
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  handleMovement();
   drawBarriers();
   drawHearts();
   drawBall();
