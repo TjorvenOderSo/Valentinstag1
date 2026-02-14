@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>After Story</title>
+<style>
+body{
+  margin:0;
+  background:black;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+img{
+  max-width:100%;
+  max-height:100%;
+  cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<img id="storyImage" src="images/after1.jpg">
+
+<script>
+let images = [
+  "images/after1.jpg",
+  "images/after2.jpg",
+  "images/after3.jpg",
+  "images/after4.jpg"
+];
+
+let current = 0;
+const img = document.getElementById("storyImage");
+
+img.addEventListener("click", ()=>{
+  current++;
+  if(current < images.length){
+    img.src = images[current];
+  } else {
+    location.href = "crossroad.html";
+  }
+});
+</script>
+
+</body>
+</html>
